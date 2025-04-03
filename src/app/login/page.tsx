@@ -2,12 +2,27 @@
 import { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials) => {
+      const res = await api.post('/auth/login', credentials);
+      console.log('로그인 응답:', res.data); // 디버깅
+      
+      // 토큰 저장
+      if (res.data.access_token) {
+        localStorage.setItem('access_token', res.data.access_token);
+        console.log('토큰 저장됨:', res.data.access_token); // 디버깅
+      }
+      return res.data;
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
