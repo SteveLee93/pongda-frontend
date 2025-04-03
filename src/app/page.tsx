@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface League {
   id: number;
@@ -17,16 +18,20 @@ interface League {
 }
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   
-  const { data: leagues, isLoading } = useQuery<League[]>({
+  const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
     queryFn: async () => {
       const res = await api.get('/leagues');
       return res.data;
     },
   });
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   // 날짜 네비게이션을 위한 함수들
   const getDates = () => {

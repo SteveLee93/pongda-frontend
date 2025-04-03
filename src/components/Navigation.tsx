@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Navigation() {
-  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -41,7 +41,7 @@ export default function Navigation() {
 
       {/* 사용자 메뉴 */}
       <div className="flex items-center space-x-6">
-        {isAuthenticated && user && !isLoading ? (
+        {isAuthenticated && user ? (
           <div className="flex items-center space-x-6">
             <Link 
               href="/me" 
