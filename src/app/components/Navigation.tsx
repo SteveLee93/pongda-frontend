@@ -1,10 +1,11 @@
-// src/app/components/Navigation.tsx
 'use client';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
-  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
@@ -41,7 +42,7 @@ export default function Navigation() {
 
       {/* 사용자 메뉴 */}
       <div className="flex items-center space-x-6">
-        {isAuthenticated && user && !isLoading ? (
+        {isAuthenticated && user ? (
           <div className="flex items-center space-x-6">
             <Link 
               href="/me" 
@@ -75,4 +76,4 @@ export default function Navigation() {
       </div>
     </nav>
   );
-}
+} 
