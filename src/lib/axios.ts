@@ -1,8 +1,11 @@
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
-  withCredentials: true,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // 토큰 디버깅을 위한 인터셉터
@@ -27,6 +30,10 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API 에러:', error.response?.data || error); // 디버깅용
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );

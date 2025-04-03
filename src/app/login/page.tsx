@@ -1,64 +1,75 @@
 'use client';
 import { useState } from 'react';
-import api from '@/lib/axios';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const router = useRouter();
-
-  const loginMutation = useMutation({
-    mutationFn: async (credentials) => {
-      const res = await api.post('/auth/login', credentials);
-      console.log('로그인 응답:', res.data); // 디버깅
-      
-      // 토큰 저장
-      if (res.data.access_token) {
-        localStorage.setItem('access_token', res.data.access_token);
-        console.log('토큰 저장됨:', res.data.access_token); // 디버깅
-      }
-      return res.data;
-    },
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('access_token', res.data.access_token);
-      router.push('/leagues');
-    } catch (err: any) {
-      setError('로그인에 실패했습니다.');
+      console.log('로그인 시도:', { email });
+      const response = await login(email, password);
+      console.log('로그인 응답:', response);
+      
+      toast.success('로그인 성공!');
+      router.push('/');
+    } catch (error: any) {
+      console.error('로그인 에러:', error);
+      toast.error(error.response?.data?.message || '로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-4 border rounded-xl shadow-xl">
-      <h1 className="text-2xl font-bold mb-4">로그인</h1>
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">로그인</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email"
-          placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded p-2"
-          required
-        />
-        <input
-          type="password"
-          placeholder="비밀번호"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded p-2"
-          required
-        />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-          로그인
+        <div>
+          <label className="block text-sm font-medium mb-1">이메일</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+            disabled={isLoading}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">비밀번호</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+            disabled={isLoading}
+          />
+        </div>
+        <button 
+          type="submit" 
+          className="w-full btn-primary"
+          disabled={isLoading}
+        >
+          {isLoading ? '로그인 중...' : '로그인'}
         </button>
+        <p className="text-center text-sm text-gray-600">
+          계정이 없으신가요?{' '}
+          <Link href="/signup" className="text-blue-600 hover:underline">
+            회원가입
+          </Link>
+        </p>
       </form>
     </div>
   );
