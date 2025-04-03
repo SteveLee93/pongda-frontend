@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import Image from 'next/image';
 
 interface League {
   id: number;
@@ -17,9 +18,29 @@ interface League {
   participantCount?: number;
 }
 
+const banners = [
+  {
+    id: 1,
+    src: '/images/banner1.jpg',
+    alt: '프로모션 배너 1'
+  },
+  {
+    id: 2,
+    src: '/images/banner2.jpg',
+    alt: '프로모션 배너 2'
+  },
+  {
+    id: 3,
+    src: '/images/banner3.jpg',
+    alt: '프로모션 배너 3'
+  },
+  // ... 추가 배너
+];
+
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentBanner, setCurrentBanner] = useState(0);
   
   const { data: leagues } = useQuery<League[]>({
     queryKey: ['leagues'],
@@ -28,6 +49,15 @@ export default function HomePage() {
       return res.data;
     },
   });
+
+  // 자동 슬라이드
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 5000); // 5초마다 변경
+
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -49,15 +79,31 @@ export default function HomePage() {
       <Navigation />
 
       {/* 배너 슬라이더 */}
-      <div className="relative mb-8 rounded-xl overflow-hidden">
-        <img 
-          src="/banner.jpg" 
-          alt="프로모션 배너" 
-          className="w-full h-64 object-cover"
+      <div className="relative mb-8 rounded-xl overflow-hidden h-64">
+        <Image 
+          src={banners[currentBanner].src}
+          alt={banners[currentBanner].alt}
+          fill
+          className="object-cover transition-opacity duration-500"
+          priority
         />
         <div className="absolute bottom-4 right-4 text-white bg-black bg-opacity-50 px-2 rounded">
-          1 / 4
+          {currentBanner + 1} / {banners.length}
         </div>
+        
+        {/* 이전/다음 버튼 */}
+        <button 
+          onClick={() => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+        >
+          ←
+        </button>
+        <button 
+          onClick={() => setCurrentBanner((prev) => (prev + 1) % banners.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+        >
+          →
+        </button>
       </div>
 
       {/* 날짜 선택 */}
