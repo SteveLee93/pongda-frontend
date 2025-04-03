@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,18 +11,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      console.log('로그인 시도:', { email });
-      const response = await login(email, password);
-      console.log('로그인 응답:', response);
-      
+      await login(email, password);
       toast.success('로그인 성공!');
-      router.push('/');
+      router.push(redirectUrl);
     } catch (error: any) {
       console.error('로그인 에러:', error);
       toast.error(error.response?.data?.message || '로그인에 실패했습니다.');

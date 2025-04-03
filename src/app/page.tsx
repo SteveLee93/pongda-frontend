@@ -67,7 +67,7 @@ export default function HomePage() {
             {leagues.map((league) => (
               <Link 
                 key={league.id} 
-                href={`/leagues/${league.id}`}
+                href={isAuthenticated ? `/leagues/${league.id}` : `/login?redirect=/leagues/${league.id}`}
                 className="block bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
               >
                 <div className="space-y-2">
