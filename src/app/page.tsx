@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
+import Navigation from '@/components/Navigation';
 
 interface League {
   id: number;
@@ -15,7 +17,8 @@ interface League {
 }
 
 export default function HomePage() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   const { data: leagues, isLoading } = useQuery<League[]>({
     queryKey: ['leagues'],
@@ -25,81 +28,105 @@ export default function HomePage() {
     },
   });
 
+  // 날짜 네비게이션을 위한 함수들
+  const getDates = () => {
+    const dates = [];
+    for (let i = -3; i <= 3; i++) {
+      const date = new Date();
+      date.setDate(selectedDate.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">탁구 리그</h1>
-        <div className="space-x-4">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {user?.nickname}님 환영합니다
-              </span>
-              <Link href="/me" className="btn-primary">
-                내 정보
-              </Link>
-              <button 
-                onClick={logout}
-                className="btn-secondary"
-              >
-                로그아웃
-              </button>
-            </div>
-          ) : (
-            <div className="space-x-4">
-              <Link href="/login" className="btn-primary">
-                로그인
-              </Link>
-              <Link href="/signup" className="btn-secondary">
-                회원가입
-              </Link>
-            </div>
-          )}
+    <div className="max-w-4xl mx-auto p-4">
+      <Navigation />
+
+      {/* 배너 슬라이더 */}
+      <div className="relative mb-8 rounded-xl overflow-hidden">
+        <img 
+          src="/banner.jpg" 
+          alt="프로모션 배너" 
+          className="w-full h-64 object-cover"
+        />
+        <div className="absolute bottom-4 right-4 text-white bg-black bg-opacity-50 px-2 rounded">
+          1 / 4
         </div>
       </div>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">진행 중인 리그</h2>
-        {isLoading ? (
-          <div className="text-center py-8">로딩 중...</div>
-        ) : leagues?.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {leagues.map((league) => (
-              <Link 
-                key={league.id} 
-                href={isAuthenticated ? `/leagues/${league.id}` : `/login?redirect=/leagues/${league.id}`}
-                className="block bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <div className="space-y-2">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-xl font-semibold">{league.name}</h3>
-                    <span className={`px-2 py-1 text-xs rounded ${
-                      league.status === 'IN_PROGRESS' 
-                        ? 'bg-green-100 text-green-800'
-                        : league.status === 'UPCOMING'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {league.status === 'IN_PROGRESS' ? '진행중' 
-                        : league.status === 'UPCOMING' ? '예정' 
-                        : '완료'}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm">{league.description}</p>
-                  <div className="text-sm text-gray-500">
-                    <p>기간: {new Date(league.startDate).toLocaleDateString()} ~ {new Date(league.endDate).toLocaleDateString()}</p>
-                    {league.participantCount && (
-                      <p>참가자: {league.participantCount}명</p>
-                    )}
-                  </div>
+      {/* 날짜 선택 */}
+      <div className="flex justify-between items-center mb-6 overflow-x-auto">
+        {getDates().map((date, index) => (
+          <button
+            key={date.toISOString()}
+            onClick={() => setSelectedDate(date)}
+            className={`flex flex-col items-center min-w-[80px] p-3 rounded-lg ${
+              date.toDateString() === selectedDate.toDateString()
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-600'
+            }`}
+          >
+            <span className="text-sm">
+              {date.toLocaleDateString('ko-KR', { weekday: 'short' })}
+            </span>
+            <span className="text-lg font-bold">
+              {date.getDate()}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* 필터 옵션 */}
+      <div className="flex space-x-2 mb-6 overflow-x-auto">
+        <button className="px-4 py-2 bg-white rounded-full text-sm border">
+          서울 ▾
+        </button>
+        <button className="px-4 py-2 bg-yellow-100 rounded-full text-sm border border-yellow-200">
+          🌟 쉐탁
+        </button>
+        <button className="px-4 py-2 bg-white rounded-full text-sm border">
+          마감 가리기
+        </button>
+        <button className="px-4 py-2 bg-white rounded-full text-sm border">
+          성별 ▾
+        </button>
+        <button className="px-4 py-2 bg-white rounded-full text-sm border">
+          레벨 ▾
+        </button>
+        <button className="px-4 py-2 bg-white rounded-full text-sm border">
+          실내·그늘막
+        </button>
+      </div>
+
+      {/* 매치 리스트 */}
+      <div className="space-y-4">
+        {leagues?.map((league) => (
+          <Link
+            key={league.id}
+            href={isAuthenticated ? `/leagues/${league.id}` : `/login?redirect=/leagues/${league.id}`}
+            className="block bg-white p-4 rounded-lg shadow hover:shadow-md transition-all"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-lg font-bold mb-1">{league.name}</div>
+                <div className="text-sm text-gray-500">
+                  {new Date(league.startDate).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-gray-500">진행 중인 리그가 없습니다.</p>
-        )}
-      </section>
+                <div className="text-xs text-gray-400 mt-1">
+                  남녀모두 · {league.participantCount}명 참여
+                </div>
+              </div>
+              <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+                마감임박!
+              </button>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
